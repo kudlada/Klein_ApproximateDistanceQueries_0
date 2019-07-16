@@ -20,6 +20,7 @@ namespace Klein_ApproximateDistanceQueries_0
         {
 
             SegmentsOrdering ord = new SegmentsOrdering();
+         //   Node xx =g.nodes[74122365];
             ord.ProcessGraph(g);
             foreach (Node n in g.nodes.Values)
                 foreach (Node.weightedEdge e in n.neighbourList)
@@ -31,7 +32,83 @@ namespace Klein_ApproximateDistanceQueries_0
                     break;
             ord.CreatePlanarNodes();  
             planarNodes = ord.planarNodes;
-            
+            PlanarNode xp =planarNodes[74122365];
+            foreach (Node n in g.nodes.Values)
+            {
+                planarNodes[n.id].insideCR = n.inside;
+                if (n.inside == false)
+                    continue;
+            }
+                
+        }
+
+        public PlanarGraph(List<PlanarNode> nodes, List<PlanarNode> sepCycle,
+            PlanarNode src, Dictionary<int, PlanarEdge> planarE)
+        {
+            PlanarNode newSrc = new PlanarNode(src.nid);
+            newSrc.edgesIds = new List<int>();
+            planarNodes = new Dictionary<long, PlanarNode>();
+            planarNodes.Add(newSrc.nid, newSrc);
+            planarEdges = new Dictionary<int, PlanarEdge>();
+            //        Dictionary<long, List<int>> toUpdate = new Dictionary<long, List<int>>();
+            //        foreach (PlanarNode n in nodes)
+            ///           toUpdate.Add(n.nid,new List<int>());
+            foreach (PlanarNode n in nodes)
+            {
+                planarNodes.Add(n.nid, n);
+                foreach (int eid in n.edgesIds)
+                {
+                    if (!planarEdges.ContainsKey(eid)&& planarE.ContainsKey(eid))
+                    {
+                        PlanarEdge e = new PlanarEdge(planarE[eid]);
+                        planarEdges[eid] = e;
+                    }
+                }
+            }
+            int has = sepCycle.IndexOf(src);
+            foreach (PlanarNode s in sepCycle)
+            {
+                if (planarNodes.ContainsKey(s.nid))
+                    has = has;
+               // List<int> toRemove = new List<int>();
+                foreach (int eid in s.edgesIds)
+                {
+                    //   PlanarEdge e =  planarE[eid];
+                    if (!planarEdges.ContainsKey(eid))
+                        continue;
+                    PlanarEdge eNew = planarEdges[eid];
+                    PlanarNode neigh = eNew.GetNeigh(s);
+                    eNew.eid = eid;
+                    if (neigh == null)
+                        break;
+                    if (neigh!= null && planarNodes.ContainsKey(neigh.nid)
+                        && neigh.parent!=null&& neigh.parent.nid==s.nid)
+                    {
+                        eNew.UpdateNeighbour(s, newSrc);
+                        newSrc.edgesIds.Add(eid);
+                        eNew.w = eNew.w + neigh.dist;
+                       
+                    }
+              //      if (toUpdate.ContainsKey(neigh.nid))
+              //          toUpdate[neigh.nid].Add(eid);
+                    
+                }
+                
+            }
+       //     planarEdges.First().Value.w = 111111;
+
+
+            /* List<int> eIds = new List<int>();
+             foreach (int eid in src.edgesIds)
+             {
+                 if (newSrc.edgesIds.Contains(eid))
+                     eIds.Add(eid);
+
+
+             }
+             */
+            //  newSrc.edgesIds = eIds;
+
         }
 
         internal PlanarGraph(
@@ -51,6 +128,9 @@ namespace Klein_ApproximateDistanceQueries_0
         public List<int> edgesIds;
         public int state = 0;
         public PlanarNode parent;
+        public List<PlanarNode> children=new List<PlanarNode>();
+        public bool insideCR = false;
+        public bool insideCycle = false;
         public PlanarNode(long id)
         {
             nid = id;
@@ -60,6 +140,7 @@ namespace Klein_ApproximateDistanceQueries_0
     class PlanarEdge
     {
         public bool inTree = false;
+       
         public bool trgl = false;   
         public int eid;
         public int w;
@@ -72,7 +153,13 @@ namespace Klein_ApproximateDistanceQueries_0
 
         public PlanarEdge()
         {
-           
+            
+        }
+
+        public PlanarEdge(PlanarNode n0, PlanarNode n1)
+        {
+            repre = new PlanarEdgeRepre(n0, n1);
+            neighboursAdjEdges = repre.arr;
         }
 
         public PlanarEdge(PlanarNode n0, PlanarNode n1, int n0EAid, int n0EBid, int weigth)
@@ -86,6 +173,26 @@ namespace Klein_ApproximateDistanceQueries_0
         {
             repre = new PlanarEdgeRepre(n0, n1, n0e);
             neighboursAdjEdges = repre.arr;
+            
+        }
+
+        public PlanarEdge(PlanarEdge e)
+        {
+            PlanarEdgeRepre repre = new PlanarEdgeRepre(
+                (PlanarNode) e.neighboursAdjEdges[0], (PlanarNode)e.neighboursAdjEdges[1]);
+            neighboursAdjEdges = repre.arr;
+            w =e.w;
+            trgl = e.trgl;
+            inTree = e.inTree;
+            eid = e.eid;
+        }
+
+        public PlanarEdge(PlanarEdge e, PlanarNode oldNeigh, PlanarNode newNeigh)
+        {
+            new PlanarEdge(e);
+            UpdateNeighbour(oldNeigh, newNeigh);
+            newNeigh.edgesIds.Add(eid);
+            w = oldNeigh.dist + e.w;
             
         }
 
@@ -212,6 +319,13 @@ namespace Klein_ApproximateDistanceQueries_0
             arr[2] = n0e;
             //arr[4] = -1;
             //arr[5] = -1;
+        }
+
+        public PlanarEdgeRepre(PlanarNode n0, PlanarNode n1)
+        {
+            arr[0] = n0;
+            arr[1] = n1;
+            
         }
 
         public void Update(Dictionary<int, PlanarEdge> planarEdges)

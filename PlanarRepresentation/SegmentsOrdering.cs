@@ -41,27 +41,29 @@ namespace Klein_ApproximateDistanceQueries_0
         void ProcessNode(Node n)
         {
 
-            if (!n.inside)                // jen vnitrni
-                return;
+          //  if (!n.inside)                // jen vnitrni
+          //      return;
 
             Dictionary<double, Node.weightedEdge> rightSector = new Dictionary<double, Node.weightedEdge>();
             Dictionary<double, Node.weightedEdge> leftSector = new Dictionary<double, Node.weightedEdge>();
             verticalEdges = new Node.weightedEdge[2];
             foreach (Node.weightedEdge e in n.neighbourList)
             {
-                if (!e.neighbour.inside)                // jen vnitrni
-                    continue;
+          //      if (!e.neighbour.inside)                // jen vnitrni
+          //          continue;
                 ProcessEdge(n, e, leftSector, rightSector);
 
             }
             List<Node.weightedEdge> edg = new List<Node.weightedEdge>();  //protism. odspod
             if (verticalEdges[1] != null)
                 edg.Add(verticalEdges[1]);
-            foreach (Node.weightedEdge e in rightSector.Values)
+            foreach (Node.weightedEdge e in 
+                    rightSector.OrderBy(x => x.Key).Select(y => y.Value))
                 edg.Add(e);
             if (verticalEdges[0] != null)
                 edg.Add(verticalEdges[0]);
-            foreach (Node.weightedEdge e in leftSector.Values)
+            foreach (Node.weightedEdge e in 
+                    leftSector.OrderBy(x => x.Key).Select(y => y.Value))
                 edg.Add(e);
             AddToEdges(n, edg);
             List<int> sortedEid = new List<int>();

@@ -11,13 +11,14 @@ namespace Klein_ApproximateDistanceQueries_0
     class OSMGraphHandler
     {
         public static PlanarGraph CreatePlanarGraph(
-            string OSMGraphFile, string intersectionsFile)
+            string OSMGraphFile, string intersectionsFile,
+            out Graph g)
         {
-            Graph g = CreateOSMGraph(OSMGraphFile, intersectionsFile);
+            g = CreateOSMGraph(OSMGraphFile, intersectionsFile);
             return new PlanarGraph(g);
         }
 
-        private static Graph CreateOSMGraph(
+        public static Graph CreateOSMGraph(
             string OSMGraphFile, string intersectionsFile)
         {
             Graph g = new Graph();
@@ -39,6 +40,15 @@ namespace Klein_ApproximateDistanceQueries_0
             {
                 throw new InvalidDataException();
             }
+            
+            /*
+            maxLat = 51.0404296;
+            minLat = 48.5874212;
+            maxLon = 18.8446152;
+            minLot = 12.1295496
+            */
+            
+            g.SetBounds(48.5874212, 51.0404296, 12.1295496, 18.8446152);
             return g;
         }
 
@@ -54,11 +64,13 @@ namespace Klein_ApproximateDistanceQueries_0
             bool inside = bool.Parse(words[3]);
             while (!r.EndOfStream)
             {
-                if (inside)
+                if (true)
+              //  if (inside)
                 {
                     n = new Node(long.Parse(words[0]));
                     n.SetData(double.Parse(words[1]), double.Parse(words[2]));
-                   
+                    inside = bool.Parse(words[3]);
+                    
                     n.inside = inside;
                     g.nodes.Add(n.id, n);
                     tmpEdges[n.id] = new Dictionary<long, int>();
@@ -67,8 +79,7 @@ namespace Klein_ApproximateDistanceQueries_0
                 words = line.Split(' ');
                 while (!r.EndOfStream && words.Count() == 2)
                 {
-                    if (inside)
-                        tmpEdges[n.id][long.Parse(words[0])] 
+                    tmpEdges[n.id][long.Parse(words[0])] 
                             = int.Parse(words[1]);
                     line = r.ReadLine();
                     words = line.Split(' ');
