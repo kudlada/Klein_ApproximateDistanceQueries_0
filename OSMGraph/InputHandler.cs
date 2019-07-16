@@ -26,6 +26,7 @@ namespace Klein_ApproximateDistanceQueries_0
             Reader reader = new Reader();
             foreach (string fileName in mapFiles)
                 reader.ReadFile(fileName,true);
+         //   Node xx = reader.graph.nodes[74122365];
             reader.ReadFile(borderFile, false);
             reader.graph.SetWeights();                  //??
             return reader.graph;
@@ -34,9 +35,10 @@ namespace Klein_ApproximateDistanceQueries_0
         private static void WriteGraphToFile(Graph g, string outputFile)
         {
             StreamWriter w = new StreamWriter(outputFile);
+            
             foreach (Node n in g.nodes.Values)
             {
-                w.WriteLine("{0} {1} {2} {3}",
+                 w.WriteLine("{0} {1} {2} {3}",
                     n.id, n.coordinates.position.latitude, n.coordinates.position.longitude, n.inside);
                 foreach (Node.weightedEdge e in n.neighbourList)
                     w.WriteLine("{0} {1}", e.neighbour.id, e.weight);

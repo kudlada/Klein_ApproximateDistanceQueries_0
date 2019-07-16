@@ -113,7 +113,8 @@ namespace Klein_ApproximateDistanceQueries_0
 
                     Node node = new Node(idNode);
                     Node nodeOut;
-
+                    if (idNode == 74122365)
+                        lat = lat;
                     node.SetData(lat, lon);
                     if (!graph.nodes.TryGetValue(idNode, out nodeOut))
                     {
@@ -124,7 +125,8 @@ namespace Klein_ApproximateDistanceQueries_0
                     else
                     {
                         nodeOut.SetData(lat, lon);
-                        node.inside = inside;
+                       
+                        nodeOut.inside = inside;
 
                     }
                 }

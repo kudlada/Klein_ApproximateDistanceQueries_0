@@ -18,7 +18,8 @@ namespace Klein_ApproximateDistanceQueries_0
             foreach (Node n in g.nodes.Values)
                 n.neighbourList = n.symList;
             foreach (Node n in g.nodes.Values)
-                if (!n.inside)
+            //    if (!n.inside)
+            if (false)
                 {
                     Node outN;
                     if (!nodesM.TryGetValue(n.id, out outN))
