@@ -57,7 +57,8 @@ namespace Klein_ApproximateDistanceQueries_0
                 }
                 switch (type)
                 {
-                    case algType.aStar: n.pot = n.coordinates.GetDist(t.coordinates.utm); break;
+                    case algType.aStar:
+                        n.pot = n.coordinates.GetDist(t.coordinates.utm)*10000; break;
                     case algType.LM:
                         {
                             if (n.LMdist.TryGetValue(lmId, out double di))
@@ -146,7 +147,13 @@ namespace Klein_ApproximateDistanceQueries_0
                     }
                 }
                 else
-                    last.LMdist.Add(s.id, D);
+                {
+                    if (!last.LMdist.ContainsKey(s.id))
+                        last.LMdist.Add(s.id, D);
+                    else
+                        last.LMdist[s.id] = D;
+                }
+                    
                 List<Node.weightedEdge> edges = last.neighbourList;
                // if (type == algType.all)
                //     edges = last.backList;

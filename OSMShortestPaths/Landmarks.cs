@@ -35,7 +35,7 @@ namespace Klein_ApproximateDistanceQueries_0
             {
                 Node s;
                 nodes.TryGetValue(n.id, out s);
-                d.GetShortestPath(n.id, 0, Dijkstra.algType.all, nodes, out int op, out int sc);
+                d.GetShortestPath(n.id, nodes.Values.Last().id, Dijkstra.algType.all, nodes, out int op, out int sc);
 
             }
         }
