@@ -15,7 +15,7 @@ namespace Klein_ApproximateDistanceQueries_0
         {
             PlanarSeparator sep = new PlanarSeparator();
             List<long> cycle;
-            Bfs.Src_all_bfs(g.planarNodes.First().Value, g.planarEdges, true);
+       //     Bfs.Src_all_bfs(g.planarNodes.First().Value, g.planarEdges, true);
             SeparatorCycle c = new SeparatorCycle();
             c.GetCycle_U_V(g, g.planarNodes[3682132103], g.planarNodes[34073500]);
             cycle = c.cycle;
@@ -46,7 +46,7 @@ namespace Klein_ApproximateDistanceQueries_0
             {
                 if (x.state > 0)
                     continue;
-                Bfs.Src_all_bfs(x, g.planarEdges, false);
+             //   Bfs.Src_all_bfs(x, g.planarEdges, false);
                 List<long> comp = Bfs.part0;
                 components.Add(x.nid, comp);
 

@@ -15,72 +15,229 @@ namespace Klein_ApproximateDistanceQueries_0
         PlanarNode commonAnc;
         bool reversed = false;
         internal List<long> cycle;
+        Dictionary<long, List<PlanarNode>> cyclesNodes = new Dictionary<long, List<PlanarNode>>();
+        List<PlanarEdge> orderedTriE;
+        public List<PlanarNode> inC = new List<PlanarNode>();
+        public List<PlanarNode> outC = new List<PlanarNode>();
+        int order = 0;
+        public SeparatorCycle()
+        {
+           
+        }
 
-        public void GetFirstCycle(PlanarGraph graph)  //step 8
+        public SeparatorCycle(PlanarGraph graph)
         {
             g = graph;
+        }
+
+        public bool GetBoundaryCycle(PlanarGraph graph, PlanarNode src,
+            PlanarEdge f)  //step 8
+        {
+            g = graph;
+
+            allCostSum = g.planarNodes.Count; //cost=1
+            int index = allCostSum / 2;       
+            SetCycleCost(f);
+            src.insideCycle = false;
+            Bfs.Src_all_bfs(src, g.planarNodes, g.planarEdges, true);
+            inC = new List<PlanarNode>();
+            outC = new List<PlanarNode>();
+            order++;
+            foreach (PlanarNode n in g.planarNodes.Values)
+            {
+                if (cycle.Contains(n.nid))
+                    continue;
+                if (n.insideCycle)
+                {
+                    inC.Add(n);
+                    n.insideCycle = false;
+                }
+
+                else// if (!cycle.Contains(n.nid))
+                    outC.Add(n); ;//vc sep
+
+
+            }
+
+            List<PlanarNode> min;
+            if (inC.Count > outC.Count)
+                min = outC;
+            else
+                min = inC;
+            // if (!cyclesNodes.ContainsKey(f.eid))
+            //      cyclesNodes.Add(f.eid, min);
+            return (min.Count > (g.planarNodes.Count) / 3);
             
+        }
+
+        public void GetFirstCycle(PlanarGraph graph, PlanarNode src,
+            int lev0)  //step 8
+        {
+            g = graph;
+           
             allCostSum = g.planarNodes.Count; //cost=1
             int index = allCostSum / 2;       //od pol.
-            bool found = false;
-            PlanarEdge e = null;
-            for (int i = index; i < g.planarNodes.Count; i++)
+                                              //   bool found = false;
+                                              //    PlanarEdge e = null;
+                                              //      for (int i = index; i < g.planarNodes.Count; i++)
+                                              //      {
+                                              //          foreach (int eid in g.planarNodes.ElementAt(i).Value.edgesIds)
+            PlanarEdge f;
+             if (order<=1)
             {
-                foreach (int eid in g.planarNodes.ElementAt(i).Value.edgesIds)
-                {
-                    if (!g.planarEdges[eid].inTree)
-                    {
-
-                        e = g.planarEdges.ElementAt(i).Value;
-                        if (((PlanarNode)e.neighboursAdjEdges[0]).dist == 0
-                            || ((PlanarNode)e.neighboursAdjEdges[1]).dist == 0) //jde o src
-                                                                               
-                            continue;
-                        found = true;
-                        break;
-                    }
-                }
-                if (found)
-                    break;
+                f = g.planarEdges[1630674];
             }
-                    
-            if (!found)
+            else
             {
-                for (int i = index - 1; i >= 0; i--)
+                if (orderedTriE == null)
+                    Init(lev0);
+                if (orderedTriE.Count == 0)
+                    return;
+                f = orderedTriE[0];
+                orderedTriE.RemoveAt(0);
+            }
+            
+                                           
+           
+          
+
+            SetCycleCost(f);
+            src.insideCycle = false;
+            Bfs.Src_all_bfs(src,g.planarNodes, g.planarEdges,true);
+            inC = new List<PlanarNode>();
+            outC = new List<PlanarNode>();
+            order++;
+            foreach (PlanarNode n in g.planarNodes.Values)
+            {
+                if (cycle.Contains(n.nid))
+                    continue;
+                if (n.insideCycle)
                 {
-                    foreach (int eid in g.planarNodes.ElementAt(i).Value.edgesIds)
-
-                        if (!g.planarEdges[eid].inTree)
-                        {
-                            found = true;
-                            e = g.planarEdges.ElementAt(i).Value;
-                            if (((PlanarNode)e.neighboursAdjEdges[0]).dist == 0
-                                || ((PlanarNode)e.neighboursAdjEdges[1]).dist == 0) //jde o src
-                                                                                    // || e.state == 0) //triang.hrana
-                                continue;
-                            break;
-                        }
-
-                    if (found)
-                        break;
+                    inC.Add(n);
+                    n.insideCycle = false;
                 }
+                   
+                else// if (!cycle.Contains(n.nid))
+                    outC.Add(n); ;//vc sep
+
 
             }
-                 
-            SetCycleCost(e);
 
+            List<PlanarNode> min;
+            if (inC.Count > outC.Count)
+                min = outC;
+            else
+                min = inC;
+           // if (!cyclesNodes.ContainsKey(f.eid))
+           //      cyclesNodes.Add(f.eid, min);
+            if (min.Count < g.planarNodes.Count / 13)
+            {
+                GetFirstCycle(g, src, lev0);
+            }
+            
+                
 
         }
+
+        private void Init(int lev0)
+        {
+            if (orderedTriE == null)
+            {
+                orderedTriE = new List<PlanarEdge>();
+                foreach (PlanarEdge e in Triangulation.triEdges)
+                {
+
+                    GetDistDiff((PlanarNode)e.neighboursAdjEdges[0],
+                        (PlanarNode)e.neighboursAdjEdges[1], e, lev0);
+
+                }
+                foreach (List<PlanarEdge> tr in cyclesSizes.OrderByDescending(x => x.Key)
+                    .Select(x => x.Value))
+                {
+                    orderedTriE = orderedTriE.Concat(tr).ToList();
+                    if (orderedTriE.Count > 1000)
+                        break;
+                }
+
+            }
+            else if (orderedTriE.Count == 0)
+                return;
+
+        }
+
+        public void RecursiveSeparation(PlanarGraph graph, PlanarNode src,
+            int lev0)
+        {
+            List<long> c = new List<long>();
+            PlanarSeparator sep = new PlanarSeparator();
+            sep.Separate(ref graph, out c);
+            Console.WriteLine(graph.planarNodes.Count);
+            Console.ReadKey();
+             GetFirstCycle(graph, src, lev0);
+            List<PlanarNode> cycleNodes
+                = cycle.Select(x => graph.planarNodes[x]).ToList();
+            PlanarGraph g0 = new PlanarGraph(inC, cycleNodes, src,
+                new Dictionary<int, PlanarEdge> (graph.planarEdges));
+           // PlanarGraph g1 = new PlanarGraph(outC, cycleNodes, src, graph.planarEdges);
+            RecursiveSeparation(g0, g0.planarNodes.ElementAt(0).Value, 10000);
+          //  RecursiveSeparation(g1, g1.planarNodes.ElementAt(0).Value, 10000);
+        }
+
+
+
+        public  List<string> outputs = new List<string>();
 
         public void GetCycle_U_V(PlanarGraph graph, PlanarNode u, PlanarNode v)
         {
             g = graph;
-            GetCycle(u, v);
+          //  GetCycle(u, v);
         }
 
-        private void GetCycle(PlanarNode u, PlanarNode v)
-        {
+        Dictionary<int, List<PlanarEdge>> cyclesSizes = new Dictionary<int, List<PlanarEdge>> ();
 
+
+        private void GetDistDiff(PlanarNode u, PlanarNode v, PlanarEdge e,int lev0)
+        {
+            if (u.dist == int.MaxValue || v.dist == int.MaxValue)
+                return;
+            if (u.dist <lev0 && v.dist < lev0)
+                return;
+            int sz = Math.Abs(u.dist - v.dist);
+            if (!cyclesSizes.ContainsKey(sz))
+                cyclesSizes.Add(sz, new List<PlanarEdge>());
+            cyclesSizes[sz].Add(e);
+            
+        }
+
+        public List<PlanarNode> SeparateByEdge(
+            PlanarEdge f, PlanarNode src,
+            out List<PlanarNode> inC, out List<PlanarNode> outC)
+        {
+            Bfs.Src_all_bfs(src, g.planarNodes, g.planarEdges, true);
+            SetCycleCost(f);
+            Bfs.Src_all_bfs(src, g.planarNodes, g.planarEdges, true);
+            inC = new List<PlanarNode>();
+            outC = new List<PlanarNode>();
+            List<PlanarNode> sep = new List<PlanarNode>();
+            foreach (PlanarNode n in g.planarNodes.Values)
+            {
+                if (cycle.Contains(n.nid))
+                    continue;
+                if (n.insideCycle)
+                {
+                    inC.Add(n);
+                    n.insideCycle = false;
+                }
+                else 
+                    outC.Add(n);
+              
+            }
+            return sep;
+        }
+
+        private void GetCycle(PlanarNode u, PlanarNode v, PlanarEdge e)
+        {
+            
             cycle = new List<long>();
             PlanarNode x = u;
             int state = -3;
@@ -96,62 +253,98 @@ namespace Klein_ApproximateDistanceQueries_0
             x.state = state;
             commonAnc = x;
             x = v;
-
+            int size = 1;
+            
             while (x.parent != null)
             {
                 cycle.Add(x.nid);
-
-                if (x.state == -3 && state == -3)
+                size++;
+                x.state = state;
+                if (x.parent.state == -3 && state == -3)
                 {
-                    commonAnc = x;
+                    commonAnc = x.parent;
                     break;
                    
                 }
-                x.state = state;
+                
                 x = x.parent;
 
             }
+            return;
+            x = u;
+            state = 0;
+
+            while (x.parent != null)
+            {
+                x.state = state;//cycle
+                x = x.parent;
+
+            }
+        //    if (!cyclesSizes.ContainsKey(size))
+        //        cyclesSizes.Add(size, e);
         }
 
-        private void SetCycleCost(PlanarEdge e)
+        public void SetCycleCost(PlanarEdge e)
         {
-            GetCycle((PlanarNode)e.neighboursAdjEdges[0], 
-                (PlanarNode)e.neighboursAdjEdges[1]);
+            PlanarNode u = (PlanarNode)e.neighboursAdjEdges[0];
+            PlanarNode v = (PlanarNode)e.neighboursAdjEdges[1];
+            GetCycle(u, v,e);
             
-            return;
+            
 
             //////
-            /*
-            x.state = state;
+            
             int sum0 = 0;
             int sum1 = 0;
             PlanarEdge xe = new PlanarEdge();
             PlanarEdge parU = null;
-            foreach (int eid in u.edgesIds)
-                if (g.planarEdges[eid].GetNeigh(u).nid==u.parent.nid)
-                {
-                    parU = g.planarEdges[eid];
-                }
             PlanarEdge parV = null;
-            foreach (int eid in v.edgesIds)
-                if (g.planarEdges[eid].GetNeigh(v).nid == v.parent.nid)
-                {
-                    parV = g.planarEdges[eid];
-                }
-            if (u.parent.parent == null && v.parent.parent == null&&false)
-                sum0 = GetDescCostFromXToZAroundY(u,u.parent, e, out xe);
-            else
+            try
             {
+                foreach (int eid in u.edgesIds)
+                    if (g.planarEdges.ContainsKey(eid)
+                        && g.planarEdges[eid].GetNeigh(u).nid == u.parent.nid)
+                    {
+
+                        parU = g.planarEdges[eid];
+                        parU.eid = eid;
+
+                    }
+                
+                foreach (int eid in v.edgesIds)
+                    if (g.planarEdges.ContainsKey(eid)
+                        && g.planarEdges[eid].GetNeigh(v).nid == v.parent.nid)
+                    {
+                        parV = g.planarEdges[eid];
+                        parV.eid = eid;
+                    }
+
+            }
+            catch (Exception ex)
+            {
+                return;
+            }
+          //  if (u.parent.parent == null && v.parent.parent == null&&false)
+          //      sum0 = GetDescCostFromXToZAroundY(u,u.parent, e, out xe);
+          //  else
+          //  {
                 e.inTree = true;
                 PlanarNode last;
-                SetCycleCostUpward(ref u, parU,e, out last, ref sum0, ref sum1);
-                SetCycleCostAroundAnc(u, last, ref sum0, ref sum1);
-                
+            try {
+                SetCycleCostUpward(ref u, parU, e, out last, ref sum0, ref sum1);
+
+       //         SetCycleCostAroundAnc(u, last, ref sum0, ref sum1);
+                SetCycleCostAroundAnc(commonAnc, last, ref sum0, ref sum1);
                 reversed = true;
                 SetCycleCostUpward(ref v, parV, e, out last, ref sum0, ref sum1);
+            }
+                catch 
+            {
+                return;
+            }
                 e.inTree = false;
                 
-            }
+          //  }
             
             if (sum0 > sum1)
             {
@@ -164,11 +357,13 @@ namespace Klein_ApproximateDistanceQueries_0
                 insideDescCost = sum1;
                 outsideDescCost = sum0;
             }
-             while (insideDescCost > 2 * outsideDescCost)
+
+
+   /*          while (insideDescCost > 2 * outsideDescCost)
             {
                 e = ExpandCycle((PlanarNode)e.neighboursAdjEdges[0], (PlanarNode)e.neighboursAdjEdges[1], e);    //(v,w,e)
             }
-                */
+    */            
         }
 
         private void SetCycleCostUpward(ref PlanarNode n, PlanarEdge pn, PlanarEdge nch, 
@@ -176,16 +371,18 @@ namespace Klein_ApproximateDistanceQueries_0
         {
             PlanarNode par = n.parent;
             last = n;
-            while (par!=null)
+            //       while (par!=null && par.nid!=commonAnc.nid)
+            while (n != null && n.nid != commonAnc.nid)
             {
                 SetCycleCostAroundN(n, pn, nch, ref sum0, ref sum1);
                 nch = pn;
                 last = n;
                 n = n.parent;
-                if (n.parent == null ||(reversed&&n.parent.state==-3))
+                if (n.parent == null )//||(reversed&&n.parent.state==-3))
                     break;
                 foreach (int eid in n.edgesIds)
-                    if (g.planarEdges[eid].GetNeigh(n).nid == n.parent.nid)
+                    if (g.planarEdges.ContainsKey(eid) &&
+                         g.planarEdges[eid].GetNeigh(n).nid == n.parent.nid)
                     {
                         pn = g.planarEdges[eid];
                         break;
@@ -214,6 +411,7 @@ namespace Klein_ApproximateDistanceQueries_0
 
         private void SetCycleCostAroundAnc(PlanarNode anc, PlanarNode last, ref int sum0, ref int sum1)
         {
+           // return;
             PlanarEdge pn=null;
             PlanarEdge nch=null;
             foreach (int eid in anc.edgesIds)
@@ -223,7 +421,8 @@ namespace Klein_ApproximateDistanceQueries_0
                     if (g.planarEdges[eid].GetNeigh(anc).nid == last.nid)
                     {
                         nch = g.planarEdges[eid];
-                        pn = nch; //src muze mit jen jednu hr.
+                        if (pn==null)
+                            pn = nch; //src muze mit jen jednu hr.
                     }
                     else
                     {
@@ -261,11 +460,21 @@ namespace Klein_ApproximateDistanceQueries_0
                 pn_nch = new List<int>(eids);
                 pn_nch.Remove(pn.eid);
             }
-           
-            foreach (int eid in pn_nch)
+
+            foreach (int eid in pn_nch.Where(ei => g.planarEdges.ContainsKey(ei)))
+            {
                 result[0] = result[0] + GetDescCost(n, g.planarEdges[eid].GetNeigh(n));
-            foreach (int eid in nch_pn)
+                if (!reversed)
+                    g.planarEdges[eid].GetNeigh(n).insideCycle = true;
+            }
+                
+            foreach (int eid in nch_pn.Where(ei => g.planarEdges.ContainsKey(ei)))
+            {
                 result[1] = result[1] + GetDescCost(n, g.planarEdges[eid].GetNeigh(n));
+                if (reversed)
+                    g.planarEdges[eid].GetNeigh(n).insideCycle = true;
+            }
+               
             return result;
         }
 
@@ -375,7 +584,11 @@ namespace Klein_ApproximateDistanceQueries_0
             }
             else
             {
-                next = ExpandCycleWithNewCycle(y, yv, yw);
+                SetCycleCost(yv);
+                return yv;
+               // int sum0_v = sum0_v;
+              //  SetCycleCost()
+               // next = ExpandCycleWithNewCycle(y, yv, yw);
 
                 //  dopocitat a dosadit inscost outscost
             }

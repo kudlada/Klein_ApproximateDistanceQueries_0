@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -11,29 +12,57 @@ namespace Klein_ApproximateDistanceQueries_0
         Dictionary<int, PlanarEdge> planarEdges;
         double k = 0;  // L(0..lev1)
         public int lev0, lev1, lev2;
-        PlanarNode src, newSrc;
-        public PlanarGraph shrGraph;  //shrinked
-        Dictionary<long, PlanarNode> shrNodes = new Dictionary<long, PlanarNode>();
+        PlanarNode src;//, newSrc;
+     //   public PlanarGraph shrGraph;  //shrinked
+     //   Dictionary<long, PlanarNode> shrNodes = new Dictionary<long, PlanarNode>();
 
-        public Dictionary<int, List<long>> Separate(PlanarGraph pg, out List<long> cycle)
+      /*  public Dictionary<int, List<long>> Separate(PlanarGraph pg, out List<long> cycle)
         {
             return Separate(pg.planarNodes, pg.planarEdges, out cycle);
         }
+*/
+ 
+
 
 
         public Dictionary<int, List<long>> Separate(
-            Dictionary<long, PlanarNode> plNodes,
-            Dictionary<int, PlanarEdge> plEdges, out List<long> cycle)
+         ref   PlanarGraph pg, out List<long> cycle)
         {
-            planarNodes = plNodes;
-            planarEdges = plEdges;
+            planarNodes = pg.planarNodes;
+            planarEdges = pg.planarEdges;
             src = planarNodes.First().Value;
-            Bfs.Src_all_bfs(src, planarEdges);
-            List<int> tri;
+            Bfs.Src_all_bfs(src,pg.planarNodes, planarEdges);
+            
             // step 3, 4, 5
             Dictionary<int, List<long>> levels = CreateMainLevels(src.nid);
+            //step 6
+        //    PlanarGraph shrinkedGraph = pg;// CreateShrinkedGraph(levels, pg,src.nid);
+     //       foreach (long nid in levels[int.MaxValue])
+     //           shrinkedGraph.planarNodes.Remove(nid);
+            //step 7
+       //     Bfs.Src_all_bfs(src, shrinkedGraph.planarEdges);
+            SeparatorUtils.SetAllSumsOfDescNodesIncludeItself(pg,src, 1);
+            if (Triangulation.triEdges==null||Triangulation.triEdges.Count==0)
+                pg = Triangulation.GetTriangulation(pg);
+     //       PlanarEdge xx = shrinkedGraph.planarEdges[1630674];
+            //step 8
+       //     SeparatorCycle sepCycle = new SeparatorCycle();
+      //      StreamWriter w = new StreamWriter("C:\\Users\\L\\Desktop\\triCycles2.txt");
+            try
+            {
+      //          sepCycle.GetFirstCycle(shrinkedGraph, src, lev0);
+            }
+            catch { };
+       //     foreach (string s in sepCycle.outputs)
+       //         w.WriteLine(s);
+       //     w.Close();
+            cycle = null;
+            return new Dictionary<int, List<long>>();
+
+            /*
+
             PlanarGraph trg = Triangulation.GetTriangulation(
-                new PlanarGraph(plNodes, plEdges), out tri);
+                new PlanarGraph(plNodes, plEdges));
             foreach (int eid in planarEdges.Keys.Reverse<int>())
             {
                 break;
@@ -63,7 +92,7 @@ namespace Klein_ApproximateDistanceQueries_0
                 pathV.Add(x.nid);
             }
 
-            //step 6
+            /////////////////////////
 
             planarNodes = trg.planarNodes;
             planarEdges = trg.planarEdges;
@@ -86,13 +115,87 @@ namespace Klein_ApproximateDistanceQueries_0
             src = newSrc;
             cycle = sepCycle.cycle;
             return levels;
-
+            */
         }
 
 
+        public DecompositionTree<DecompositionTreeItem, LeafDistTable> 
+            GetSeparationTree(PlanarGraph pg, PlanarNode src) //1610738   78794
+        {
+            pg = Triangulation.GetTriangulation(pg);
+            PlanarEdge ww = pg.planarEdges[1630674];
+            Dictionary<PlanarEdge, int> cyclesTriEdges
+                = new Dictionary<PlanarEdge, int>();
+            StreamReader r = new StreamReader("C:\\Users\\L\\Desktop\\triCycles.txt");
+            while (!r.EndOfStream)
+            {
+                string line = r.ReadLine();
+                string[] spl = line.Split(new char[] { ' ' },
+                    StringSplitOptions.RemoveEmptyEntries);
+                cyclesTriEdges.Add(
+                    pg.planarEdges[int.Parse(spl[0])], int.Parse(spl[0]));
+            }
+            int max = cyclesTriEdges.Values.Max();
+            KeyValuePair<PlanarEdge,int> maxTriE 
+                = cyclesTriEdges.Where(x => x.Value == max).First();
+            cyclesTriEdges.Remove(maxTriE.Key);
+           
+            SeparatorCycle cycle = new SeparatorCycle(pg);
+            List<PlanarNode> inC;
+            List<PlanarNode> outC;
+            List<PlanarNode> sep = cycle.SeparateByEdge(
+             pg.planarEdges[1630674], pg.planarNodes.First().Value,out inC,out outC);
+            return null;
+      //      DecompositionTreeItem rootIte
+        }
 
-
-
+        //step 6
+        private PlanarGraph CreateShrinkedGraph(Dictionary<int, List<long>> levels,
+            PlanarGraph pg, long srcNid)
+        {
+            Dictionary<long, PlanarNode> originalNodes
+                = new Dictionary<long, PlanarNode>(pg.planarNodes);
+            Dictionary<long, PlanarNode> shrNodes = new Dictionary<long, PlanarNode>();
+            foreach (int key in levels.Keys)
+            {
+                if (key >= lev0)// && key <= lev2)
+                    foreach (long nid in levels[key])
+                    {
+                        PlanarNode n = pg.planarNodes[nid];
+                        shrNodes.Add(n.nid, n);
+                    }
+                        
+            }
+            PlanarNode src2 =originalNodes[srcNid];
+            shrNodes.Add(src2.nid, src2);
+            foreach (PlanarNode n in shrNodes.Values)
+            {
+                break;
+                List<int> newEdgesIds = new List<int>();
+                foreach (int eid in n.edgesIds)
+                {
+                    PlanarEdge e = pg.planarEdges[eid];
+                    PlanarNode neigh = e.GetNeigh(n);
+                    if (shrNodes.ContainsKey(neigh.nid))
+                        newEdgesIds.Add(eid);
+                        
+                }
+                n.edgesIds = newEdgesIds;
+            }
+            Dictionary<int, PlanarEdge> shrEdges = new Dictionary<int, PlanarEdge>();
+            foreach (PlanarEdge e in pg.planarEdges.Values)
+            {
+                break;
+                if (shrNodes.ContainsKey(
+                    ((PlanarNode)e.neighboursAdjEdges[0]).nid)
+                    &&
+                    shrNodes.ContainsKey(
+                    ((PlanarNode)e.neighboursAdjEdges[1]).nid))
+                    shrEdges.Add(e.eid, e);
+            }
+            GoAroundBnfTree(pg.planarNodes,levels, src2);
+            return new PlanarGraph(shrNodes, shrEdges);
+        }
 
         void CloseEdge(PlanarNode n, int dist, List<PlanarEdge> opened)
         {
@@ -145,10 +248,10 @@ namespace Klein_ApproximateDistanceQueries_0
         {
             Dictionary<int, int> levelsSizes;
             Dictionary<int, List<long>> levels = GetLevels(out levelsSizes);        // kdyz nemam velkou komp...
-            List<long> unreach = levels[0];   // +src
+            List<long> unreach =new List<long>( levels[0]);   // +src
             levels[0] = new List<long>();
             levels[0].Add(srcNid);
-
+        //    levels[int.MaxValue] = unreach;
             lev1 = GetFirstLevelWithGrTotalSum(planarNodes.Count / 2, levelsSizes);
             SetLevel0(levelsSizes);
             SetLevel2(levelsSizes);
@@ -168,12 +271,15 @@ namespace Klein_ApproximateDistanceQueries_0
             Dictionary<int, List<long>> levels = new Dictionary<int, List<long>>();
             foreach (PlanarNode n in planarNodes.Values)
             {
-                int dist = n.dist;
+                int dist = n.dist;// (n.dist/100)*100;  // n.dist;
                 if (!levels.ContainsKey(dist))
                     levels.Add(dist, new List<long>());
                 levels[dist].Add(n.nid);
 
             }
+    //        List<long> unreach = levels[0];   // +src
+    //        levels[0] = new List<long>();
+    //        levels[int.MaxValue] = unreach;
             levelsSizes = new Dictionary<int, int>();
             foreach (KeyValuePair<int, List<long>> pair in levels)
                 levelsSizes.Add(pair.Key, pair.Value.Count);
@@ -184,7 +290,7 @@ namespace Klein_ApproximateDistanceQueries_0
         {
             int totalSum = 0;
 
-            foreach (int key in levelsSizes.Keys)
+            foreach (int key in levelsSizes.Keys.OrderBy(x=>x))
             {
                 totalSum = totalSum + levelsSizes[key];
                 if (totalSum > max)
@@ -237,7 +343,9 @@ namespace Klein_ApproximateDistanceQueries_0
 
         }
 
-        void GoAroundBnfTree(Dictionary<int, List<long>> levels)
+        void GoAroundBnfTree(Dictionary<long,PlanarNode> nodes,
+            Dictionary<int, List<long>> levels, 
+            PlanarNode src2)
         {
             List<PlanarEdge> nottree = new List<PlanarEdge>();
             foreach (PlanarEdge e in planarEdges.Values)
@@ -246,34 +354,35 @@ namespace Klein_ApproximateDistanceQueries_0
 
             Dictionary<long, bool> table = new Dictionary<long, bool>();
             bool b = false;
-            foreach (KeyValuePair<int, List<long>> pair in levels)
-            {
-                if ((pair.Key >= lev2))
+            foreach (PlanarNode n in nodes.Values)
+            // foreach (KeyValuePair<int, List<long>> pair in levels)
+            // {
+            /*    if ((pair.Key >= lev2))
                 {
                     foreach (long nid in pair.Value)
                         table.Add(nid, false);
                     continue;
                 }
-
-                if (pair.Key <= lev0)
+*/
+            //  if (pair.Key == int.MaxValue)
+            //      continue;
+            { 
+                if (n.dist < lev0)
                     b = true;
                 else
                     b = false;
-                foreach (long nid in pair.Value)
-                {
-                    table.Add(nid, b);
-                    if (pair.Key > lev0)
-                        shrNodes.Add(nid, planarNodes[nid]);
-                }
-
+            
+                    table.Add(n.nid, b);
+                    
             }
 
-            newSrc = new PlanarNode(0);
-            newSrc.edgesIds = new List<int>();
-            GoAroundNode(src, planarEdges[src.edgesIds.First()], table);
+        //    newSrc = new PlanarNode(0);
+        //    newSrc.edgesIds = new List<int>();
+            GoAroundNode(src2, planarEdges[src.edgesIds.First()], src, table);
         }
 
-        void GoAroundNode(PlanarNode n0, PlanarEdge e0, Dictionary<long, bool> table)
+        void GoAroundNode(PlanarNode n0, PlanarEdge e0,
+            PlanarNode src2, Dictionary<long, bool> table)
         {
 
             e0.state++;
@@ -283,17 +392,18 @@ namespace Klein_ApproximateDistanceQueries_0
             PlanarNode m;
             PlanarNode n1 = e0.GetNeigh(n0);
             PlanarEdge e1 = planarEdges[e0.GetNextEdgeId(n1)];
+
             if (e1.parent == null)
             {
-                Check(e1, n1, table);
+                Check(e1, n1,src2, table);
                 m = e1.GetNeigh(n1);
-                GoAroundNode(m, e1, table);
+                GoAroundNode(m, e1, src2, table);
             }
             else
             {
                 if (n1.dist > lev0)
                 {
-                    Check(e1, n1, table);  // never -pro kontrolu
+                    Check(e1, n1,src2, table);  // never -pro kontrolu
                 }
 
                 else
@@ -303,34 +413,25 @@ namespace Klein_ApproximateDistanceQueries_0
                     {
 
                         PlanarEdge f = planarEdges[e1.GetNextEdgeId(n1)];
-                        Check(e1, n1, table);
+                        Check(e1, n1,src, table);
                         n2 = f.GetNeigh(n1);
                         e1 = f;
                     }
                 }
-                GoAroundNode(n1, e1, table);
+                GoAroundNode(n1, e1, src, table);
             }
         }
 
 
-
-
-        bool Check(PlanarEdge e, PlanarNode n, Dictionary<long, bool> table)
+        bool Check(PlanarEdge e, PlanarNode n, PlanarNode src2, Dictionary<long, bool> table)
         {
-
             PlanarNode neigh = e.GetNeigh(n);
-
-
             if (table[neigh.nid])
                 return false;
             table[neigh.nid] = true;
-            neigh.parent = newSrc;
-            e.UpdateNeighbour(n, newSrc);    //dodelat src vs newsrc
-            e.inTree = true;                 //bude v shr
-
-
-            newSrc.edgesIds.Add(e.eid);
-
+            e.UpdateNeighbour(n, src2);   
+            //        
+            src2.edgesIds.Add(e.eid);
             return true;
 
         }

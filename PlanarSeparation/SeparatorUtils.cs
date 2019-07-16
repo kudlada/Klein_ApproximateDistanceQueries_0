@@ -128,10 +128,11 @@ namespace Klein_ApproximateDistanceQueries_0
 
 
 
-        public static void SetAllSumsOfDescNodesIncludeItself(PlanarGraph g, int cost)
+        public static void SetAllSumsOfDescNodesIncludeItself(PlanarGraph g,PlanarNode root,
+            int cost)
         {
             Dictionary<long, List<PlanarNode>> children = new Dictionary<long, List<PlanarNode>>();
-            PlanarNode root = null;
+            
 
             foreach (PlanarNode pn in g.planarNodes.Values)
                 if (pn.parent != null)
@@ -141,11 +142,7 @@ namespace Klein_ApproximateDistanceQueries_0
                     children[pn.parent.nid].Add(pn);
 
                 }
-                else
-                    root = pn;
-
-            if (root == null)
-                return;
+                
             SetSumOfDescNodesIncludeItself(g, root, children);
 
         }
