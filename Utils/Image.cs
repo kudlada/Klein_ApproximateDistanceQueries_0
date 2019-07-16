@@ -19,7 +19,7 @@ namespace Klein_ApproximateDistanceQueries_0
         {
             width = 2800;
             height = 1700;
-            name = "C:/Users/L/Desktop/" + nm + "_map.svg";
+            name = "C:/Users/L/Desktop/" + nm + ".svg";
             file = new StreamWriter(name);
         }
 
@@ -402,7 +402,7 @@ namespace Klein_ApproximateDistanceQueries_0
         {
             Dictionary<long, Node> nodes = graph.nodes;
             Node s = nodes[plNodes.First().nid];
-            file = new StreamWriter("C:/Users/L/Desktop/GetPlanarGraphBNF.svg");
+            file = new StreamWriter(name);
             WriteHeader(s, s, 50, plNodes.Count);
             List<Node> one = new List<Node>();
             foreach (Node n in nodes.Values)
