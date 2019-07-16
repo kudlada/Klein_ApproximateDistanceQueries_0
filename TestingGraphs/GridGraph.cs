@@ -64,9 +64,9 @@ namespace Klein_ApproximateDistanceQueries_0
             for (int k = start; k < start + n; k++)
             {
                 Node u = new Node(k);
-                u.coordinates.position.Latitude = lat;
-                u.coordinates.position.Longitude = lon;
-                lon = lon + step;
+                u.coordinates.position.Latitude = lat +k; //bez +k/2
+                u.coordinates.position.Longitude = lon; 
+                lon = lon + step *3 ;  //bez *3
                 u.coordinates.pictureCrd2 = u.coordinates.position.latitude;
                 u.coordinates.pictureCrd1 = u.coordinates.position.longitude;
                 row[k - start] = u;
