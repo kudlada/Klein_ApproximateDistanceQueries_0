@@ -1,0 +1,15 @@
+[out:json];
+  area
+  ["boundary"="administrative"]
+  ["admin_level"="2"]
+  ["ISO3166-1:alpha2"="CZ"]
+->.cz;
+out body;
+
+(way(area.cz)
+   ["highway"~"primary|primary_link"];
+node(w);
+
+);
+
+out body qt;
