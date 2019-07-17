@@ -9,7 +9,7 @@ namespace Klein_ApproximateDistanceQueries_0
     {
         Node s, t;
         int openC, scanC;
-        long lmId;
+        public  long lmId;
         public enum algType { simple, aStar, LM, all };
         
         public List<Node> GetShortestPath(long sid, long tid, algType type,
@@ -62,7 +62,8 @@ namespace Klein_ApproximateDistanceQueries_0
                     case algType.LM:
                         {
                             if (n.LMdist.TryGetValue(lmId, out double di))
-                                n.pot = di - t.LMdist[lmId];
+                                n.pot =Math.Max( 
+                                    di - t.LMdist[lmId],-di + t.LMdist[lmId]);
                             else
                                 n.pot = 0;
                             break;

@@ -17,11 +17,11 @@ namespace Klein_ApproximateDistanceQueries_0
             Dictionary<int, int> mess = new Dictionary<int, int>();
             Init(g, mess);
             Landmarks lms = new Landmarks(g.minLat, g.maxLat, g.minLon, g.maxLon);
-            List<Node> LM = lms.GenerateLatticeLM(80, g.nodes);
+            List<Node> LM = lms.GenerateLatticeLM(50, g.nodes);
             dij.LM = LM;
             dij.g = g;
             lms.GetDistTrees(LM, ref g.nodes);
-            List<Tuple<long, long>> tuples = GetRandomTuples(1000, g.nodes);
+            List<Tuple<long, long>> tuples = GetRandomTuples(10, g.nodes);
             // pro 10000 skalovat podle dist.
             StreamWriter wr = new StreamWriter("C:/Users/L/Desktop/tup_P.txt");
             foreach (Tuple<long, long> tup in tuples)
@@ -35,19 +35,51 @@ namespace Klein_ApproximateDistanceQueries_0
                     sId, tId, Dijkstra.algType.simple, g.nodes, out ope, out sc);
 
                 double d0 = t.distance;
-                wr.WriteLine("{0}x{1}x{2}", path0.Count, ope, sc);
+                wr.WriteLine("{0}x{1}x{2}", sId, tId, t.distance);
 
                 List<Node> path2 = dij.GetShortestPath(
-                    sId, tId, Dijkstra.algType.LM, g.nodes, out ope, out sc);
-                d0 = (int)t.distance;
-                wr.WriteLine("{0}x{1}x{2}", sId, tId, d0);
-                if (path0.Count != path2.Count)
+                    sId, tId, Dijkstra.algType.aStar, g.nodes, out ope, out sc);
+            
+                wr.WriteLine("{0}x{1}x{2}", sId, tId, t.distance+s.pot);
+                if (false&&path0.Count != path2.Count)
+                {
+                   // continue;
                     wr.WriteLine("Error.");
-                wr.WriteLine("{0}x{1}x{2}", path2.Count, ope, sc);
-
-                double lDist = t.distance;
+                    foreach (Node n in path2.Where(x => !path0.Contains(x)))
+                        wr.Write(n.id);
+                    wr.WriteLine();
+                }
+                    
+              //  wr.WriteLine("{0}x{1}x{2}", path2.Count, ope, sc);
+             //   n.distance + s.LMdist[lmi] - n.LMdist[lmi]
+               // double lDist = t.distance + s.LMdist[dij.lmId] - t.LMdist[dij.lmId];
                 double lS = s.pot;
                 double lT = t.pot;
+                foreach (Node n in g.nodes.Values)
+                {
+                   // continue;
+                    foreach (Node.weightedEdge e in n.neighbourList)
+                    {
+
+                        e.weight = mess[e.id];
+                    }
+                    foreach (Node.weightedEdge e in n.backList)
+                    {
+
+                        e.weight = mess[e.id];
+                    }
+                }
+                List<Node> path3 = dij.GetShortestPath(
+                    sId, tId, Dijkstra.algType.LM, g.nodes, out ope, out sc);
+
+                wr.WriteLine("{0}x{1}x{2}", sId, tId,t.distance+s.pot);
+                if (false&&path3.Count != path0.Count)
+                {
+                    wr.WriteLine("Error.");
+                    foreach (Node n in path3.Where(x => !path0.Contains(x)))
+                        wr.Write(n.id);
+                    wr.WriteLine();
+                }
                 foreach (Node n in g.nodes.Values)
                 {
                     foreach (Node.weightedEdge e in n.neighbourList)

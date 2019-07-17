@@ -103,7 +103,7 @@ namespace Klein_ApproximateDistanceQueries_0
         public long GetNearestLM(List<Node> LM, Node s, Node t)
         {
             Node lm = t;
-            double dist = 100000;
+            double dist = double.MaxValue;
             Line lineST = new Line(s.coordinates.position.longitude, s.coordinates.position.latitude,
                 t.coordinates.position.longitude, t.coordinates.position.latitude);
 
